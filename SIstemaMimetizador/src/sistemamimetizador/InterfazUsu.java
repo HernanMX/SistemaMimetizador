@@ -1,5 +1,13 @@
 package sistemamimetizador;
 //librerias
+//No subir importacion libreria //////////////
+
+import com.panamahitek.PanamaHitek_Arduino;
+import com.panamahitek.ArduinoException;
+import com.panamahitek.PanamaHitek_MultiMessage;
+//Primero ocupas estas tres librerias 
+//////////////////////////////////////////////
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,8 +16,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.ResourceBundle.Control;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,9 +32,13 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
+import jssc.SerialPortEvent;
+import jssc.SerialPortEventListener;
+import jssc.SerialPortException;
 
 public class InterfazUsu extends JFrame {
-    JButton btnAgregar, btnEliminar, btnActualizar;
+
+    JButton btnAgregar, btnEliminar, btnActualizar,btnSensores;
     JPanel panel, panelSec, panelTab1, panelTab2, panelTab3;
     JLabel lbltitulo, lblTemp, lblHumedad, lblLum, lblHora, lblFecha,
             etiqueta1;
@@ -35,16 +49,24 @@ public class InterfazUsu extends JFrame {
     JTabbedPane panelPest;
     JTable tabla;
     DefaultTableModel dtm;
-    String columnas[] = {"No.","Mensaje"};
+    String columnas[] = {"No.", "Mensaje"};
     String datos[][] = {};
-    JScrollPane scroll,scrollTextArea;
+    JScrollPane scroll, scrollTextArea;
     Date d;
-    //ArrayList  sms;
-    int contador,columna,fila;
+    int contador, columna, fila;
+    static PanamaHitek_Arduino arduino,arduinoSend;
+    static SerialPortEventListener listener;
+    static PanamaHitek_MultiMessage multi;
+    /////////////////////////
     public InterfazUsu() {
         super("Sistema Mimetizador");
         this.setLayout(null);
         crear();
+        try {
+            arduino.arduinoRXTX("/dev/ttyACM0", 9600 ,listener);
+        } catch (ArduinoException ex) {
+            Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
+        }      
         armarPanelTAb();
         armarPanelOeste();
         armarVentana();
@@ -55,6 +77,7 @@ public class InterfazUsu extends JFrame {
         btnAgregar = new JButton("Agregar");
         btnEliminar = new JButton("Eliminar");
         btnActualizar = new JButton("Actualizar");
+        btnSensores = new JButton("Actualizar");
         texto = new JTextArea();
         panel = new JPanel(null);
         panelSec = new JPanel(new BorderLayout());
@@ -66,17 +89,43 @@ public class InterfazUsu extends JFrame {
         tabla = new JTable(dtm);
         tabla.setAutoCreateRowSorter(true);
         tabla.setShowGrid(true);
-        tabla.setPreferredScrollableViewportSize(new Dimension(200,150));
+        tabla.setPreferredScrollableViewportSize(new Dimension(200, 150));
         scroll = new JScrollPane(tabla);
         d = new Date();
         etiqueta1 = new JLabel("panel uno", SwingConstants.CENTER);
-        lblFecha = new JLabel("FECHA: " + d.getDate()+ "/" + (d.getMonth()+1) +
-                             "/"+ (d.getYear()+1900),SwingConstants.CENTER);
+        lblFecha = new JLabel("FECHA: " + d.getDate() + "/" + (d.getMonth() + 1)
+                + "/" + (d.getYear() + 1900), SwingConstants.CENTER);
         lblHora = new JLabel("HORA: " + d.getHours() + ":" + d.getMinutes()
-                             ,SwingConstants.CENTER);
+                             + ":" + d.getSeconds(), SwingConstants.CENTER);
         scrollTextArea = new JScrollPane(texto);
-        contador = 0;
+        contador = 2;
         fila = 0;
+        lblTemp= new JLabel();
+        lblHumedad= new JLabel();
+        lblLum = new JLabel();
+        ////////////////////////
+        arduino = new PanamaHitek_Arduino();
+        arduinoSend = new PanamaHitek_Arduino();
+        multi = new PanamaHitek_MultiMessage(3, arduino); 
+        listener = new SerialPortEventListener() { 
+            @Override
+            public void serialEvent(SerialPortEvent spe) {
+            try {
+                if(multi.dataReceptionCompleted()){ 
+                    lblTemp.setText("Temperatura: "+multi.getMessage(0) + "°C");  
+                    lblHumedad.setText("Humedad: "+ multi.getMessage(1) + "%");
+                    lblLum.setText("Luminosidad: " + multi.getMessage(2) + ""); 
+                }
+            } catch (ArduinoException ex) {
+                Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SerialPortException ex) {
+                Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            }
+        };
+        
+        /////////////////////////////////////////
+
     }
 
     void armarPanelTAb() {
@@ -86,18 +135,50 @@ public class InterfazUsu extends JFrame {
         panelTab3.setBackground(Color.white);
         panelTab3.setLayout(null);
         panelTab1.setLayout(new GridLayout(2, 1));
-        panelTab1.add(lblFecha,0);
-        panelTab1.add(lblHora,1);
+        panelTab2.setLayout(null);
+        panelTab1.add(lblFecha, 0);
+        panelTab1.add(lblHora, 1);
         scroll.setBounds(0, 0, 300, 180);
         panelTab3.add(scroll);
         btnEliminar.setBounds(330, 20, 100, 30);
         panelTab3.add(btnEliminar);
         btnActualizar.setBounds(330, 60, 100, 30);
         panelTab3.add(btnActualizar);
+        lblTemp.setBounds(30,30,200,10);
+        lblHumedad.setBounds(30,65,150,10);
+        lblLum.setBounds(30,95,150,10);
+        btnSensores.setBounds(300,60,120,30);
+        panelTab2.add(lblTemp);
+        panelTab2.add(lblHumedad);
+        panelTab2.add(lblLum);
+        btnSensores.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            multi = new PanamaHitek_MultiMessage(3, arduino); 
+            listener = new SerialPortEventListener() { 
+                @Override
+                public void serialEvent(SerialPortEvent spe) {
+                    try {
+                        if(multi.dataReceptionCompleted()){ 
+                            lblTemp.setText("Temperatura: "+multi.getMessage(0) + "°C");  
+                            lblHumedad.setText("Humedad: "+ multi.getMessage(1) + "%");
+                            lblLum.setText("Luminosidad: " + multi.getMessage(2) + ""); 
+                        }
+                    } catch (ArduinoException ex) {
+                        Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SerialPortException ex) {
+                        Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            };
+            }
+        });
+        panelTab2.add(btnSensores);
         panelPest.addTab("Fecha y Hora", null, panelTab1, "Primer panel");
         panelPest.addTab("Medidas", null, panelTab2, "Segundo panel");
         panelPest.addTab("Tabla de mensajes", null, panelTab3, "Tercer panel");
-       
+        System.out.println(arduino.getSerialPorts());
+
     }
 
     void armarPanelOeste() {
@@ -108,71 +189,86 @@ public class InterfazUsu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Date actualizard = new Date();
-                if (texto.getText().length() <= 128 ){
-                    Object [] registro={contador+1,texto.getText()};
-                    dtm.addRow(registro);
-                    lblFecha.setText("FECHA: " + actualizard.getDate()+ "/" + 
-                            (actualizard.getMonth()+1) +
-                             "/"+ (actualizard.getYear()+1900));
-                    lblHora.setText("HORA: " + actualizard.getHours() + ":" + 
-                            actualizard.getMinutes());
-                    contador ++;
-                }else{
-                    JOptionPane.showMessageDialog(null,"Intenta mostrar un mensaje demasiado grande",
-                                                  "Error",JOptionPane.ERROR_MESSAGE,null);
-       
+                if (!texto.getText().isEmpty()) {
+                    if (texto.getText().length() <= 128) {
+                        Object[] registro = {contador, texto.getText()};
+                        dtm.addRow(registro);
+                        lblFecha.setText("FECHA: " + actualizard.getDate() + "/"
+                                + (actualizard.getMonth() + 1)
+                                + "/" + (actualizard.getYear() + 1900));
+                        lblHora.setText("HORA: " + actualizard.getHours() + ":"
+                                + actualizard.getMinutes() +":"+ actualizard.getSeconds());
+                        try {
+                            String sms = "";
+                            sms += contador+","+texto.getText() + " "+ lblFecha.getText()
+                                    + lblHora.getText();
+                            arduino.sendData(sms); 
+                            
+                        } catch (ArduinoException ex) {
+                            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (SerialPortException ex) {
+                            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        contador++;
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Intenta mostrar un mensaje demasiado grande",
+                                "Error", JOptionPane.ERROR_MESSAGE, null);
+
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "El mensje que desea agregar esta vacio",
+                            "Error", JOptionPane.ERROR_MESSAGE, null);
                 }
                 texto.setText(null);
             }
         });
         btnAgregar.setBackground(new Color(50, 141, 182));
         btnActualizar.setBackground(new Color(50, 141, 182));
-        btnActualizar.addActionListener(new ActionListener(){
+        btnActualizar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                try{
+                try {
                     System.out.println(fila);
-                    dtm.setValueAt(texto.getText(),fila,1);
-                    
-                }catch(Exception e){
-                    JOptionPane.showMessageDialog(null,"No ha seleccionado "
-                            + "ningun mensaje", "Error", 
-                            JOptionPane.ERROR_MESSAGE,null);
+                    dtm.setValueAt(texto.getText(), fila, 1);
+
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "No ha seleccionado "
+                            + "ningun mensaje", "Error",
+                            JOptionPane.ERROR_MESSAGE, null);
                 }
             }
-            
+
         });
-        tabla.addMouseListener(new MouseAdapter(){
+        tabla.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e){
+            public void mouseClicked(MouseEvent e) {
                 texto.setText(dtm.getValueAt(tabla.getSelectedRow(), 1).toString());
                 fila = tabla.getSelectedRow();
                 System.out.println(fila);
             }
-             
+
         });
         btnEliminar.setBackground(new Color(50, 141, 182));
-        btnEliminar.addActionListener(new ActionListener(){
+        btnEliminar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-               try{
+                try {
                     dtm.removeRow(tabla.getSelectedRow());
-                    
-               }catch(Exception e){
-                 JOptionPane.showMessageDialog(null,"No ha seleccionado "
-                            + "ningun mensaje", "Error", 
-                            JOptionPane.ERROR_MESSAGE,null);
+                    texto.setText("");
+
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "No ha seleccionado "
+                            + "ningun mensaje", "Error",
+                            JOptionPane.ERROR_MESSAGE, null);
                 }
             }
-            
+
         });
         btnAgregar.setForeground(Color.WHITE);
         btnEliminar.setForeground(Color.WHITE);
         btnActualizar.setForeground(Color.WHITE);
         panel.add(btnAgregar);
         panel.add(scrollTextArea);
-        //panel.add(btnActualizar);
-        //panel.add(btnEliminar);
     }
 
     void armarVentana() {
@@ -182,8 +278,6 @@ public class InterfazUsu extends JFrame {
         this.setBackground(Color.WHITE);
         add(panelSec, BorderLayout.WEST);
         add(panel);
-        //Falta panel para escribir los mensajes?
-        //NO ya no, esperame poquito, si quieres yo lo acomodo y tu le pones funciones arre
     }
 
     void lanzar() {
@@ -193,5 +287,5 @@ public class InterfazUsu extends JFrame {
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
-}
 
+}
