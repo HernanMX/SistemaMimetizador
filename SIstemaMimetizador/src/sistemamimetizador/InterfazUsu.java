@@ -16,8 +16,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.ResourceBundle.Control;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -38,7 +42,7 @@ import jssc.SerialPortException;
 
 public class InterfazUsu extends JFrame {
 
-    JButton btnAgregar, btnEliminar, btnActualizar,btnSensores;
+    JButton btnAgregar, btnEliminar, btnActualizar, btnSensores;
     JPanel panel, panelSec, panelTab1, panelTab2, panelTab3;
     JLabel lbltitulo, lblTemp, lblHumedad, lblLum, lblHora, lblFecha,
             etiqueta1;
@@ -54,19 +58,36 @@ public class InterfazUsu extends JFrame {
     JScrollPane scroll, scrollTextArea;
     Date d;
     int contador, columna, fila;
-    static PanamaHitek_Arduino arduino,arduinoSend;
+    static PanamaHitek_Arduino arduino, arduinoSend;
     static SerialPortEventListener listener;
     static PanamaHitek_MultiMessage multi;
+    static Scanner lector;
+    static String entrada = "";
+    FileWriter fichero = null;
+    PrintWriter pw = null;
+
     /////////////////////////
     public InterfazUsu() {
         super("Sistema Mimetizador");
         this.setLayout(null);
         crear();
         try {
-            arduino.arduinoRXTX("/dev/ttyACM0", 9600 ,listener);
+            arduino.arduinoRXTX("COM3", 9600, listener);
         } catch (ArduinoException ex) {
             Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
-        }      
+        }
+        try {
+            lector = new Scanner(new FileInputStream("src/texto/Cadena.txt"));
+            while (lector.hasNext()) {
+                entrada = lector.nextLine();
+                contador++;
+                Object[] datosEntrada = {contador, entrada};
+                dtm.addRow(datosEntrada);
+
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Ha ocurrido un error al leer\nEl archivo indicado", "Analizador Lexico", JOptionPane.ERROR_MESSAGE);
+        }
         armarPanelTAb();
         armarPanelOeste();
         armarVentana();
@@ -96,36 +117,35 @@ public class InterfazUsu extends JFrame {
         lblFecha = new JLabel("FECHA: " + d.getDate() + "/" + (d.getMonth() + 1)
                 + "/" + (d.getYear() + 1900), SwingConstants.CENTER);
         lblHora = new JLabel("HORA: " + d.getHours() + ":" + d.getMinutes()
-                             + ":" + d.getSeconds(), SwingConstants.CENTER);
+                + ":" + d.getSeconds(), SwingConstants.CENTER);
         scrollTextArea = new JScrollPane(texto);
-        contador = 2;
+        contador = 0;
         fila = 0;
-        lblTemp= new JLabel();
-        lblHumedad= new JLabel();
+        lblTemp = new JLabel();
+        lblHumedad = new JLabel();
         lblLum = new JLabel();
         ////////////////////////
         arduino = new PanamaHitek_Arduino();
         arduinoSend = new PanamaHitek_Arduino();
-        multi = new PanamaHitek_MultiMessage(3, arduino); 
-        listener = new SerialPortEventListener() { 
+        multi = new PanamaHitek_MultiMessage(3, arduino);
+        listener = new SerialPortEventListener() {
             @Override
             public void serialEvent(SerialPortEvent spe) {
-            try {
-                if(multi.dataReceptionCompleted()){ 
-                    lblTemp.setText("Temperatura: "+multi.getMessage(0) + "°C");  
-                    lblHumedad.setText("Humedad: "+ multi.getMessage(1) + "%");
-                    lblLum.setText("Luminosidad: " + multi.getMessage(2) + ""); 
+                try {
+                    if (multi.dataReceptionCompleted()) {
+                        lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
+                        lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
+                        lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
+                    }
+                } catch (ArduinoException ex) {
+                    Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SerialPortException ex) {
+                    Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            } catch (ArduinoException ex) {
-                Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SerialPortException ex) {
-                Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-            }
             }
         };
-        
-        /////////////////////////////////////////
 
+        /////////////////////////////////////////
     }
 
     void armarPanelTAb() {
@@ -144,33 +164,33 @@ public class InterfazUsu extends JFrame {
         panelTab3.add(btnEliminar);
         btnActualizar.setBounds(330, 60, 100, 30);
         panelTab3.add(btnActualizar);
-        lblTemp.setBounds(30,30,200,10);
-        lblHumedad.setBounds(30,65,150,10);
-        lblLum.setBounds(30,95,150,10);
-        btnSensores.setBounds(300,60,120,30);
+        lblTemp.setBounds(30, 30, 200, 10);
+        lblHumedad.setBounds(30, 65, 150, 10);
+        lblLum.setBounds(30, 95, 150, 10);
+        btnSensores.setBounds(300, 60, 120, 30);
         panelTab2.add(lblTemp);
         panelTab2.add(lblHumedad);
         panelTab2.add(lblLum);
         btnSensores.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            multi = new PanamaHitek_MultiMessage(3, arduino); 
-            listener = new SerialPortEventListener() { 
-                @Override
-                public void serialEvent(SerialPortEvent spe) {
-                    try {
-                        if(multi.dataReceptionCompleted()){ 
-                            lblTemp.setText("Temperatura: "+multi.getMessage(0) + "°C");  
-                            lblHumedad.setText("Humedad: "+ multi.getMessage(1) + "%");
-                            lblLum.setText("Luminosidad: " + multi.getMessage(2) + ""); 
+                multi = new PanamaHitek_MultiMessage(3, arduino);
+                listener = new SerialPortEventListener() {
+                    @Override
+                    public void serialEvent(SerialPortEvent spe) {
+                        try {
+                            if (multi.dataReceptionCompleted()) {
+                                lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
+                                lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
+                                lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
+                            }
+                        } catch (ArduinoException ex) {
+                            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (SerialPortException ex) {
+                            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                    } catch (ArduinoException ex) {
-                        Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SerialPortException ex) {
-                        Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-            };
+                };
             }
         });
         panelTab2.add(btnSensores);
@@ -191,25 +211,25 @@ public class InterfazUsu extends JFrame {
                 Date actualizard = new Date();
                 if (!texto.getText().isEmpty()) {
                     if (texto.getText().length() <= 128) {
+                        contador++;
                         Object[] registro = {contador, texto.getText()};
                         dtm.addRow(registro);
                         lblFecha.setText("FECHA: " + actualizard.getDate() + "/"
                                 + (actualizard.getMonth() + 1)
                                 + "/" + (actualizard.getYear() + 1900));
                         lblHora.setText("HORA: " + actualizard.getHours() + ":"
-                                + actualizard.getMinutes() +":"+ actualizard.getSeconds());
+                                + actualizard.getMinutes() + ":" + actualizard.getSeconds());
                         try {
                             String sms = "";
-                            sms += contador+","+texto.getText() + " "+ lblFecha.getText()
+                            sms += contador + "," + texto.getText() + " " + lblFecha.getText()
                                     + lblHora.getText();
-                            arduino.sendData(sms); 
-                            
+                            arduino.sendData(sms);
+
                         } catch (ArduinoException ex) {
                             Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
                         } catch (SerialPortException ex) {
                             Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                        contador++;
                     } else {
                         JOptionPane.showMessageDialog(null, "Intenta mostrar un mensaje demasiado grande",
                                 "Error", JOptionPane.ERROR_MESSAGE, null);
@@ -220,6 +240,28 @@ public class InterfazUsu extends JFrame {
                             "Error", JOptionPane.ERROR_MESSAGE, null);
                 }
                 texto.setText(null);
+                try {
+                    fichero = new FileWriter("src/texto/Cadena.txt");
+                    pw = new PrintWriter(fichero);
+
+                    for (int i = 0; i < dtm.getRowCount(); i++) {
+                        pw.println(dtm.getValueAt(i, 1));
+                    }
+
+                } catch (Exception eb) {
+                    System.out.println("Error");
+                } finally {
+                    try {
+                        // Nuevamente aprovechamos el finally para 
+                        // asegurarnos que se cierra el fichero.
+                        if (null != fichero) {
+                            fichero.close();
+                        }
+                    } catch (Exception e2) {
+                        e2.printStackTrace();
+                    }
+                }
+
             }
         });
         btnAgregar.setBackground(new Color(50, 141, 182));
@@ -260,6 +302,27 @@ public class InterfazUsu extends JFrame {
                     JOptionPane.showMessageDialog(null, "No ha seleccionado "
                             + "ningun mensaje", "Error",
                             JOptionPane.ERROR_MESSAGE, null);
+                }
+                try {
+                    fichero = new FileWriter("src/texto/Cadena.txt");
+                    pw = new PrintWriter(fichero);
+
+                    for (int i = 0; i < dtm.getRowCount(); i++) {
+                        pw.println(dtm.getValueAt(i, 1));
+                    }
+
+                } catch (Exception eb) {
+                    System.out.println("Error");
+                } finally {
+                    try {
+                        // Nuevamente aprovechamos el finally para 
+                        // asegurarnos que se cierra el fichero.
+                        if (null != fichero) {
+                            fichero.close();
+                        }
+                    } catch (Exception e2) {
+                        e2.printStackTrace();
+                    }
                 }
             }
 
