@@ -53,7 +53,7 @@ public class InterfazUsu extends JFrame {
     JTabbedPane panelPest;
     JTable tabla;
     DefaultTableModel dtm;
-    String columnas[] = {"No.", "Mensaje"};
+    String columnas[] = {"No.", "Mensaje", "Fecha y hora"};
     String datos[][] = {};
     JScrollPane scroll, scrollTextArea;
     Date d;
@@ -72,7 +72,7 @@ public class InterfazUsu extends JFrame {
         this.setLayout(null);
         crear();
         try {
-            arduino.arduinoRXTX("COM3", 9600, listener);
+            arduino.arduinoRXTX("COM6", 9600, listener);
         } catch (ArduinoException ex) {
             Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -80,13 +80,25 @@ public class InterfazUsu extends JFrame {
             lector = new Scanner(new FileInputStream("src/texto/Cadena.txt"));
             while (lector.hasNext()) {
                 entrada = lector.nextLine();
+                String message = entrada;
+                String[] men = message.split("-");
                 contador++;
-                Object[] datosEntrada = {contador, entrada};
+                Object[] datosEntrada = {contador, men[0], men[1]};
                 dtm.addRow(datosEntrada);
+                try {
+                    String conca = contador + "," + men[0] + " " + men[1];
+                    arduino.sendData(conca);
+                    System.out.println( men[0]);
+                    System.out.println(men[1]);
+                } catch (ArduinoException ex) {
+                    Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SerialPortException ex) {
+                    Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Ha ocurrido un error al leer\nEl archivo indicado", "Analizador Lexico", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "ERROR AL LEER ARCHIVO", "Sistema Mimetizador", JOptionPane.ERROR_MESSAGE);
         }
         armarPanelTAb();
         armarPanelOeste();
@@ -133,9 +145,12 @@ public class InterfazUsu extends JFrame {
             public void serialEvent(SerialPortEvent spe) {
                 try {
                     if (multi.dataReceptionCompleted()) {
-                        lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
-                        lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
-                        lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
+//                          String tec;
+//                          tec=multi.getMessage(0);
+//                          arduino.sendData(dtm.getValueAt(Integer.parseInt(tec), 1).toString());
+//                        lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
+//                        lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
+//                        lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
                     }
                 } catch (ArduinoException ex) {
                     Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
@@ -212,7 +227,7 @@ public class InterfazUsu extends JFrame {
                 if (!texto.getText().isEmpty()) {
                     if (texto.getText().length() <= 128) {
                         contador++;
-                        Object[] registro = {contador, texto.getText()};
+                        Object[] registro = {contador, texto.getText(), lblFecha.getText() + " " + lblHora.getText()};
                         dtm.addRow(registro);
                         lblFecha.setText("FECHA: " + actualizard.getDate() + "/"
                                 + (actualizard.getMonth() + 1)
@@ -245,7 +260,7 @@ public class InterfazUsu extends JFrame {
                     pw = new PrintWriter(fichero);
 
                     for (int i = 0; i < dtm.getRowCount(); i++) {
-                        pw.println(dtm.getValueAt(i, 1));
+                        pw.println(dtm.getValueAt(i, 1) + "-" + dtm.getValueAt(i, 2));
                     }
 
                 } catch (Exception eb) {
@@ -308,7 +323,7 @@ public class InterfazUsu extends JFrame {
                     pw = new PrintWriter(fichero);
 
                     for (int i = 0; i < dtm.getRowCount(); i++) {
-                        pw.println(dtm.getValueAt(i, 1));
+                        pw.println(dtm.getValueAt(i, 1) + "-" + dtm.getValueAt(i, 2));
                     }
 
                 } catch (Exception eb) {

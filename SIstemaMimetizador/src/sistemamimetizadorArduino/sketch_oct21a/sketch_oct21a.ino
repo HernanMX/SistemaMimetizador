@@ -1,5 +1,6 @@
 #include <Separador.h>
 
+
 #include <Key.h>
 #include <Keypad.h>
 
@@ -27,7 +28,7 @@ int i;
 const byte numRows= 4; //número de filas en el teclado
 const byte numCols= 4; //
 Separador s;
-String datos [] = {"Bienvenido"};
+String datos [10];
 int numero=0;
 
 
@@ -61,17 +62,17 @@ void setup() {
 
 void loop() {
 
-  delay(500);
-        t = dht.readTemperature();
-        h = dht.readHumidity();
-        V = analogRead(LDR);         
-        i = ((long)(1024-V)*A*10)/((long)B*Rc*V);
-        String temp = (String)t;
-        String hum = (String)h;
-        String ilu = (String)i;
-        String mensaje = ("Temp " + temp +"°C " + "Humedad: "+ hum +"% "+"Luminosidad: " + ilu);
-        datos[1] = mensaje;
-        
+//  delay(500);
+//        t = dht.readTemperature();
+//        h = dht.readHumidity();
+//        V = analogRead(LDR);         
+//        i = ((long)(1024-V)*A*10)/((long)B*Rc*V);
+//        String temp = (String)t;
+//        String hum = (String)h;
+//        String ilu = (String)i;
+//        String mensaje = ("Temp " + temp +"°C " + "Humedad: "+ hum +"% "+"Luminosidad: " + ilu);
+//        datos[1] = mensaje;
+//        
   if(Serial.available()>0){
     delay(100);
     while(Serial.available()>0){
@@ -87,49 +88,65 @@ void loop() {
     datos[numero] = ms;
     //lcd.print(ms);
   }
-  sms = "";
-  //no="";
-  ms="";
+//  sms = "";
+//  //no="";
+//  ms="";
   
      
       
     char keypressed = myKeypad.getKey();
     if (keypressed != NO_KEY) {
        if(keypressed == '0'){
-        Serial.print("0"); 
+        lcd.clear();
+        //lcd.setCursor(3,0);
+        //lcd.print((String)datos[0]);
+        //delay(5000);
+        lcd.clear();
+        impresiones("Bienvenido"); 
         }
        if(keypressed == '1'){
-        Serial.print("0"); 
+        lcd.clear();
+        impresiones((String)datos[1]);
        }
        if(keypressed == '2'){
-        Serial.print("0");        
+        lcd.clear();
+       impresiones((String)datos[2]);       
        }
        if(keypressed == '3'){
-        Serial.print("0"); 
+        lcd.clear();
+        impresiones((String)datos[3]);
        }
        if(keypressed == '4'){
-        Serial.print("0");   
+        lcd.clear();
+        impresiones((String)datos[4]);   
        }
        if(keypressed == '5'){
-        Serial.print("0");  
+        lcd.clear();
+        impresiones((String)datos[5]);   
        }
        if(keypressed == '6'){
-        Serial.print("0");    
+        lcd.clear();
+        impresiones((String)datos[6]);   
        }
        if(keypressed == '7'){
-        Serial.print("0");   
+        lcd.clear();
+        impresiones((String)datos[7]);   
        }
        if(keypressed == '8'){
-        Serial.print("0");    
+        lcd.clear();
+        impresiones((String)datos[8]);   
        }
        if(keypressed == '9'){
-        Serial.print("0");  
+        lcd.clear();
+        impresiones((String)datos[9]);   
        }
        if(keypressed == 'A'){
-        Serial.print("0"); 
+        //lcd.clear();
+        
        }
        if(keypressed == 'B'){
-        Serial.print("0"); 
+        lcd.clear();
+        //impresiones((String)datos[0]);
        }
        if(keypressed == 'C'){
         lcd.clear();
