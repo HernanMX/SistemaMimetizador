@@ -5,8 +5,6 @@ package sistemamimetizador;
 import com.panamahitek.PanamaHitek_Arduino;
 import com.panamahitek.ArduinoException;
 import com.panamahitek.PanamaHitek_MultiMessage;
-import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
 //Primero ocupas estas tres librerias 
 //////////////////////////////////////////////
 
@@ -20,11 +18,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.ResourceBundle.Control;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -62,88 +57,51 @@ public class InterfazUsu extends JFrame {
     String datos[][] = {};
     JScrollPane scroll, scrollTextArea;
     Date d;
-    int contador, columna, fila;
+    int contador, columna, fila,cont;
     static PanamaHitek_Arduino arduino, arduinoSend;
     static SerialPortEventListener listener;
     static PanamaHitek_MultiMessage multi;
-    static Scanner lector;
-    static String entrada = "";
+    static Scanner lector,lector1;
+    static String entrada = "",entrada1="";
     FileWriter fichero = null;
     PrintWriter pw = null;
-    private static OutputStream Output = null; //Se define el atributo para Output.
-    private static SerialPort serialPort; //Se define el atributo para SerialPort.
-    private static final String PORT_NAME = "/dev/ttyACM0"; //Indica el puerto que se utilizara como comunicarse con Arduino.
-    private static final int TIME_OUT = 2000; //Se especifica el tiempo en 2000.
-    private static final int DATA_RATE = 9600;//Se especifica la velocidad de datos en 9600.
-
-    /////////////////////////
+ 
+    
     public InterfazUsu() {
         super("Sistema Mimetizador");
         this.setLayout(null);
         crear();
-//        try {
-//            arduino.arduinoRXTX("COM6", 9600, listener);
-//        } catch (ArduinoException ex) {
-//            Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-        CommPortIdentifier portId = null;
-        Enumeration portEnum = CommPortIdentifier.getPortIdentifiers(); //Obtiene un identificador para portEnum.
-        while (portEnum.hasMoreElements()) { //Mientras haya mas elementos en el puerto sigue repitiendo.
-            CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement(); //Le asigna un identificador al puerto.
-            if (PORT_NAME.equals(currPortId.getName())) { //Verifica si el nombre del puerto es igual a el identificar asignado anteriormente.
-                portId = currPortId; //De serlo se asigna este puerto al portId
-                break; //Rompe el ciclo while.
-            }
-        }
-        if (portId == null) { //Verifica que el puerto no sea nulo y de serlo te da a conocer el error.
-            JOptionPane.showMessageDialog(null, "Error con el puerto");
-            return;
-        }
         try {
-            //Se le asigna el tiempo y velocidad de datos al puerto Serial que deben coincidir con los de arduino.
-            serialPort = (SerialPort) portId.open(this.getClass().getName(), TIME_OUT);
-            serialPort.setSerialPortParams(DATA_RATE,
-                    SerialPort.DATABITS_8,
-                    SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE);
-            Output = serialPort.getOutputStream(); //Establece el puerto serial en el Ouyput para que se puedan comunicar la computadora y arduino.
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error al conector a Arduino");
+            arduino.arduinoRXTX("/dev/ttyACM0", 9600, listener);
+        } catch (ArduinoException ex) {
+            Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
         }
+        carDat();
+        armarPanelTAb();
+        armarPanelOeste();
+        armarVentana();
+        lanzar();
+    }
+    
+    void carDat(){
         try {
-            lector = new Scanner(new FileInputStream("src/texto/Cadena.txt"));
+            lector = new Scanner(new FileInputStream("/home/hernan_gonzalez/NetBeansProjects/SistemaMimetizador/SIstemaMimetizador/src/Texto/Cadena.txt"));
             while (lector.hasNext()) {
                 entrada = lector.nextLine();
                 String message = entrada;
                 String[] men = message.split("-");
                 contador++;
                 Object[] datosEntrada = {contador, men[0], men[1]};
+                String sms = "";
+//                System.out.println(contador);
+//                            sms += "5" + "," + "Hola";
+//                            arduino.sendData(sms);
                 dtm.addRow(datosEntrada);
 
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "ERROR AL LEER ARCHIVO", "Sistema Mimetizador", JOptionPane.ERROR_MESSAGE);
         }
-        //try {
-            String conca = "1,Juanito Peraz";
-        try {
-            //contador + "," + men[0] + " " + men[1];
-            //arduino.sendData(conca);
-            Output.write(conca.getBytes()); //Se mandan todos los mensajes leidos.
-            System.out.println(conca);
-        } catch (IOException ex) {
-            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-        }
-//        } catch (ArduinoException ex) {
-//            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (SerialPortException ex) {
-//            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-
-        armarPanelTAb();
-        armarPanelOeste();
-        armarVentana();
-        lanzar();
     }
 
     private void crear() {
@@ -172,6 +130,7 @@ public class InterfazUsu extends JFrame {
                 + ":" + d.getSeconds(), SwingConstants.CENTER);
         scrollTextArea = new JScrollPane(texto);
         contador = 0;
+        cont=1;
         fila = 0;
         lblTemp = new JLabel();
         lblHumedad = new JLabel();
@@ -185,14 +144,13 @@ public class InterfazUsu extends JFrame {
             public void serialEvent(SerialPortEvent spe) {
                 try {
                     if (multi.dataReceptionCompleted()) {
-                        for (int i = 1; i <= dtm.getRowCount(); i++) {
-                            arduino.sendData(i + "," + dtm.getValueAt(i - 1, 1) + " " + dtm.getValueAt(i - 1, 2));
-
-                        }
-
-//                          String tec;
-//                          tec=multi.getMessage(0);
-//                          arduino.sendData(dtm.getValueAt(Integer.parseInt(tec), 1).toString());
+//                        for (int i = 1; i <= dtm.getRowCount(); i++) {
+//                            arduino.sendData(i + "," + dtm.getValueAt(i - 1, 1) + " " + dtm.getValueAt(i - 1, 2));
+//                            
+//                        }
+                         // String tec;
+                         // tec=multi.getMessage(0);
+                        //arduino.sendData(dtm.getValueAt(Integer.parseInt(tec), 1).toString());
 //                        lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
 //                        lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
 //                        lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
@@ -243,6 +201,7 @@ public class InterfazUsu extends JFrame {
                                 lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
                                 lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
                                 lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
+            
                             }
                         } catch (ArduinoException ex) {
                             Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
@@ -301,7 +260,7 @@ public class InterfazUsu extends JFrame {
                 }
                 texto.setText(null);
                 try {
-                    fichero = new FileWriter("src/texto/Cadena.txt");
+                    fichero = new FileWriter("/home/hernan_gonzalez/NetBeansProjects/SistemaMimetizador/SIstemaMimetizador/src/Texto/Cadena.txt");
                     pw = new PrintWriter(fichero);
 
                     for (int i = 0; i < dtm.getRowCount(); i++) {
@@ -330,14 +289,24 @@ public class InterfazUsu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 try {
-                    System.out.println(fila);
-                    dtm.setValueAt(texto.getText(), fila, 1);
+            lector1 = new Scanner(new FileInputStream("/home/hernan_gonzalez/NetBeansProjects/SistemaMimetizador/SIstemaMimetizador/src/Texto/Cadena.txt"));
+            while (lector1.hasNext()) {
+                entrada1 = lector1.nextLine();
+                String message = entrada1;
+                String[] men = message.split("-");
+                cont++;
+                //Object[] datosEntrada = {contador, men[0], men[1]};
+                 String sms = "";
+                System.out.println(cont);
+                            sms += cont + "," + men[0]+" "+men[1];
+                            arduino.sendData(sms);
+                //dtm.addRow(datosEntrada);
 
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "No ha seleccionado "
-                            + "ningun mensaje", "Error",
-                            JOptionPane.ERROR_MESSAGE, null);
-                }
+            }
+            //arduino.sendData(sms);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "ERROR AL LEER ARCHIVO", "Sistema Mimetizador", JOptionPane.ERROR_MESSAGE);
+        }
             }
 
         });
@@ -346,7 +315,6 @@ public class InterfazUsu extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 texto.setText(dtm.getValueAt(tabla.getSelectedRow(), 1).toString());
                 fila = tabla.getSelectedRow();
-                System.out.println(fila);
             }
 
         });
@@ -355,6 +323,10 @@ public class InterfazUsu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 try {
+                    
+                    String sms = "";
+                            sms += (tabla.getSelectedRow()+1) + "," +"";
+                    arduino.sendData(sms);
                     dtm.removeRow(tabla.getSelectedRow());
                     texto.setText("");
 
@@ -364,7 +336,7 @@ public class InterfazUsu extends JFrame {
                             JOptionPane.ERROR_MESSAGE, null);
                 }
                 try {
-                    fichero = new FileWriter("src/texto/Cadena.txt");
+                    fichero = new FileWriter("/home/hernan_gonzalez/NetBeansProjects/SistemaMimetizador/SIstemaMimetizador/src/Texto/Cadena.txt");
                     pw = new PrintWriter(fichero);
 
                     for (int i = 0; i < dtm.getRowCount(); i++) {
