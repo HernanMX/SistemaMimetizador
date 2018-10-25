@@ -5,6 +5,8 @@ package sistemamimetizador;
 import com.panamahitek.PanamaHitek_Arduino;
 import com.panamahitek.ArduinoException;
 import com.panamahitek.PanamaHitek_MultiMessage;
+import gnu.io.CommPortIdentifier;
+import gnu.io.SerialPort;
 //Primero ocupas estas tres librerias 
 //////////////////////////////////////////////
 
@@ -18,8 +20,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.ResourceBundle.Control;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -65,16 +70,45 @@ public class InterfazUsu extends JFrame {
     static String entrada = "";
     FileWriter fichero = null;
     PrintWriter pw = null;
+    private static OutputStream Output = null; //Se define el atributo para Output.
+    private static SerialPort serialPort; //Se define el atributo para SerialPort.
+    private static final String PORT_NAME = "/dev/ttyACM0"; //Indica el puerto que se utilizara como comunicarse con Arduino.
+    private static final int TIME_OUT = 2000; //Se especifica el tiempo en 2000.
+    private static final int DATA_RATE = 9600;//Se especifica la velocidad de datos en 9600.
 
     /////////////////////////
     public InterfazUsu() {
         super("Sistema Mimetizador");
         this.setLayout(null);
         crear();
+//        try {
+//            arduino.arduinoRXTX("COM6", 9600, listener);
+//        } catch (ArduinoException ex) {
+//            Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+        CommPortIdentifier portId = null;
+        Enumeration portEnum = CommPortIdentifier.getPortIdentifiers(); //Obtiene un identificador para portEnum.
+        while (portEnum.hasMoreElements()) { //Mientras haya mas elementos en el puerto sigue repitiendo.
+            CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement(); //Le asigna un identificador al puerto.
+            if (PORT_NAME.equals(currPortId.getName())) { //Verifica si el nombre del puerto es igual a el identificar asignado anteriormente.
+                portId = currPortId; //De serlo se asigna este puerto al portId
+                break; //Rompe el ciclo while.
+            }
+        }
+        if (portId == null) { //Verifica que el puerto no sea nulo y de serlo te da a conocer el error.
+            JOptionPane.showMessageDialog(null, "Error con el puerto");
+            return;
+        }
         try {
-            arduino.arduinoRXTX("COM6", 9600, listener);
-        } catch (ArduinoException ex) {
-            Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
+            //Se le asigna el tiempo y velocidad de datos al puerto Serial que deben coincidir con los de arduino.
+            serialPort = (SerialPort) portId.open(this.getClass().getName(), TIME_OUT);
+            serialPort.setSerialPortParams(DATA_RATE,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE);
+            Output = serialPort.getOutputStream(); //Establece el puerto serial en el Ouyput para que se puedan comunicar la computadora y arduino.
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error al conector a Arduino");
         }
         try {
             lector = new Scanner(new FileInputStream("src/texto/Cadena.txt"));
@@ -85,21 +119,27 @@ public class InterfazUsu extends JFrame {
                 contador++;
                 Object[] datosEntrada = {contador, men[0], men[1]};
                 dtm.addRow(datosEntrada);
-                try {
-                    String conca = contador + "," + men[0] + " " + men[1];
-                    arduino.sendData(conca);
-                    System.out.println( men[0]);
-                    System.out.println(men[1]);
-                } catch (ArduinoException ex) {
-                    Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (SerialPortException ex) {
-                    Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-                }
 
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "ERROR AL LEER ARCHIVO", "Sistema Mimetizador", JOptionPane.ERROR_MESSAGE);
         }
+        //try {
+            String conca = "1,Juanito Peraz";
+        try {
+            //contador + "," + men[0] + " " + men[1];
+            //arduino.sendData(conca);
+            Output.write(conca.getBytes()); //Se mandan todos los mensajes leidos.
+            System.out.println(conca);
+        } catch (IOException ex) {
+            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+        }
+//        } catch (ArduinoException ex) {
+//            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (SerialPortException ex) {
+//            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+
         armarPanelTAb();
         armarPanelOeste();
         armarVentana();
@@ -145,6 +185,11 @@ public class InterfazUsu extends JFrame {
             public void serialEvent(SerialPortEvent spe) {
                 try {
                     if (multi.dataReceptionCompleted()) {
+                        for (int i = 1; i <= dtm.getRowCount(); i++) {
+                            arduino.sendData(i + "," + dtm.getValueAt(i - 1, 1) + " " + dtm.getValueAt(i - 1, 2));
+
+                        }
+
 //                          String tec;
 //                          tec=multi.getMessage(0);
 //                          arduino.sendData(dtm.getValueAt(Integer.parseInt(tec), 1).toString());

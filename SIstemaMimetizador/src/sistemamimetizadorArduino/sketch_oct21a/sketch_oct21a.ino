@@ -74,7 +74,7 @@ void loop() {
 //        datos[1] = mensaje;
 //        
   if(Serial.available()>0){
-    delay(100);
+    delay(1);
     while(Serial.available()>0){
       char caracter = Serial.read();
        if(caracter != '\n'){
@@ -84,7 +84,7 @@ void loop() {
     no = s.separa(sms, ',' , 0);
     int numero= no.toInt();
     ms = s.separa(sms, ',' , 1);
-    sms = "";
+   // sms = "";
     datos[numero] = ms;
     //lcd.print(ms);
   }
