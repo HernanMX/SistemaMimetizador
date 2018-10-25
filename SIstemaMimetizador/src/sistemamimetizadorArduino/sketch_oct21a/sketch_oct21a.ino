@@ -1,9 +1,6 @@
 #include <Separador.h>
-
-
 #include <Key.h>
 #include <Keypad.h>
-
 #include <DHT.h>
 #include <LiquidCrystal.h>
 
@@ -28,7 +25,7 @@ int i;
 const byte numRows= 4; //número de filas en el teclado
 const byte numCols= 4; //
 Separador s;
-String datos [10];
+String datos [16];
 int numero=0;
 
 
@@ -62,19 +59,19 @@ void setup() {
 
 void loop() {
 
-//  delay(500);
-//        t = dht.readTemperature();
-//        h = dht.readHumidity();
-//        V = analogRead(LDR);         
-//        i = ((long)(1024-V)*A*10)/((long)B*Rc*V);
-//        String temp = (String)t;
-//        String hum = (String)h;
-//        String ilu = (String)i;
-//        String mensaje = ("Temp " + temp +"°C " + "Humedad: "+ hum +"% "+"Luminosidad: " + ilu);
-//        datos[1] = mensaje;
+  delay(500);
+        t = dht.readTemperature();
+        h = dht.readHumidity();
+        V = analogRead(LDR);         
+        i = ((long)(1024-V)*A*10)/((long)B*Rc*V);
+        String temp = (String)t;
+        String hum = (String)h;
+        String ilu = (String)i;
+        String mensaje = ("Temp " + temp +"°C " + "Humedad: "+ hum +"% "+"Luminosidad: " + ilu);
+        datos[1] = mensaje;
 //        
   if(Serial.available()>0){
-    delay(1);
+    delay(100);
     while(Serial.available()>0){
       char caracter = Serial.read();
        if(caracter != '\n'){
@@ -84,7 +81,7 @@ void loop() {
     no = s.separa(sms, ',' , 0);
     int numero= no.toInt();
     ms = s.separa(sms, ',' , 1);
-   // sms = "";
+    sms = "";
     datos[numero] = ms;
     //lcd.print(ms);
   }
@@ -106,63 +103,123 @@ void loop() {
         }
        if(keypressed == '1'){
         lcd.clear();
+        if((String)datos[1] !=""){
         impresiones((String)datos[1]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
        if(keypressed == '2'){
         lcd.clear();
-       impresiones((String)datos[2]);       
+       if((String)datos[2] !=""){
+        impresiones((String)datos[2]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }      
        }
        if(keypressed == '3'){
         lcd.clear();
+        if((String)datos[3] !=""){
         impresiones((String)datos[3]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
        if(keypressed == '4'){
         lcd.clear();
-        impresiones((String)datos[4]);   
+        if((String)datos[4] !=""){
+        impresiones((String)datos[4]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }   
        }
        if(keypressed == '5'){
         lcd.clear();
-        impresiones((String)datos[5]);   
+        if((String)datos[5] !=""){
+        impresiones((String)datos[5]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }   
        }
        if(keypressed == '6'){
         lcd.clear();
-        impresiones((String)datos[6]);   
+        if((String)datos[6] !=""){
+        impresiones((String)datos[6]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }   
        }
        if(keypressed == '7'){
         lcd.clear();
-        impresiones((String)datos[7]);   
+        if((String)datos[7] !=""){
+        impresiones((String)datos[7]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }   
        }
        if(keypressed == '8'){
         lcd.clear();
-        impresiones((String)datos[8]);   
+        if((String)datos[8] !=""){
+        impresiones((String)datos[8]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }   
        }
        if(keypressed == '9'){
         lcd.clear();
-        impresiones((String)datos[9]);   
+        if((String)datos[8] !=""){
+        impresiones((String)datos[8]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }  
        }
        if(keypressed == 'A'){
-        //lcd.clear();
+        if((String)datos[10] !=""){
+        impresiones((String)datos[10]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }lcd.clear();
         
        }
        if(keypressed == 'B'){
         lcd.clear();
-        //impresiones((String)datos[0]);
+        if((String)datos[11] !=""){
+        impresiones((String)datos[11]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
        if(keypressed == 'C'){
         lcd.clear();
-        //lcd.print("numero 2");
+        if((String)datos[12] !=""){
+        impresiones((String)datos[12]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
        if(keypressed == 'D'){
         lcd.clear();
-        //lcd.print("numero 4");
+        if((String)datos[13] !=""){
+        impresiones((String)datos[13]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
        if(keypressed == '*'){
         lcd.clear();
-        //impresiones((String)datos[0]);
+        if((String)datos[14] !=""){
+        impresiones((String)datos[14]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
        if(keypressed == '#'){
         lcd.clear();
-        //lcd.print("numero 2");
+        if((String)datos[15] !=""){
+        impresiones((String)datos[15]);
+        }else{
+          lcd.print("No hay Mensaje");
+        }
        }
     }
 //}

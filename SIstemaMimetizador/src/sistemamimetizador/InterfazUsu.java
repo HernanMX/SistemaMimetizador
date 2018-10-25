@@ -322,6 +322,7 @@ public class InterfazUsu extends JFrame {
         btnEliminar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
+                int count;
                 try {
                     
                     String sms = "";
