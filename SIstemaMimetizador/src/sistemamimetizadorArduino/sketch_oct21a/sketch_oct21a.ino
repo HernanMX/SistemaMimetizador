@@ -96,56 +96,40 @@ void loop() {
     char keypressed = myKeypad.getKey();
     if (keypressed != NO_KEY) {
        if(keypressed == '0'){
-        lcd.clear();
-        lcd.setCursor(3,0);
-        lcd.print((String)datos[0]);
-        delay(5000);
-        lcd.clear();
-        impresiones((String)datos[1]); 
+        Serial.print("0"); 
         }
        if(keypressed == '1'){
-        lcd.clear();
-        impresiones((String)datos[1]);
+        Serial.print("0"); 
        }
        if(keypressed == '2'){
-        lcd.clear();
-       impresiones((String)datos[2]);       
+        Serial.print("0");        
        }
        if(keypressed == '3'){
-        lcd.clear();
-        impresiones((String)datos[3]);
+        Serial.print("0"); 
        }
        if(keypressed == '4'){
-        lcd.clear();
-        impresiones((String)datos[4]);   
+        Serial.print("0");   
        }
        if(keypressed == '5'){
-        lcd.clear();
-        impresiones((String)datos[5]);   
+        Serial.print("0");  
        }
        if(keypressed == '6'){
-        lcd.clear();
-        impresiones((String)datos[6]);   
+        Serial.print("0");    
        }
        if(keypressed == '7'){
-        lcd.clear();
-        impresiones((String)datos[7]);   
+        Serial.print("0");   
        }
        if(keypressed == '8'){
-        lcd.clear();
-        impresiones((String)datos[8]);   
+        Serial.print("0");    
        }
        if(keypressed == '9'){
-        lcd.clear();
-        impresiones((String)datos[9]);   
+        Serial.print("0");  
        }
        if(keypressed == 'A'){
-        //lcd.clear();
-        
+        Serial.print("0"); 
        }
        if(keypressed == 'B'){
-        lcd.clear();
-        //impresiones((String)datos[0]);
+        Serial.print("0"); 
        }
        if(keypressed == 'C'){
         lcd.clear();
