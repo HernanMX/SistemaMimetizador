@@ -1,13 +1,10 @@
 package sistemamimetizador;
-//librerias
-//No subir importacion libreria //////////////
-
+//libreria para la comunicacion con arduino
 import com.panamahitek.PanamaHitek_Arduino;
 import com.panamahitek.ArduinoException;
 import com.panamahitek.PanamaHitek_MultiMessage;
-//Primero ocupas estas tres librerias 
-//////////////////////////////////////////////
 
+//importacion de los elementos necesarios para creacion de interfaz
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -41,7 +38,7 @@ import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 
 public class InterfazUsu extends JFrame {
-
+    //Declaracion de elementos para crear interfaz grafica
     JButton btnAgregar, btnEliminar, btnActualizar, btnSensores;
     JPanel panel, panelSec, panelTab1, panelTab2, panelTab3;
     JLabel lbltitulo, lblTemp, lblHumedad, lblLum, lblHora, lblFecha,
@@ -56,11 +53,14 @@ public class InterfazUsu extends JFrame {
     String columnas[] = {"No.", "Mensaje", "Fecha y hora"};
     String datos[][] = {};
     JScrollPane scroll, scrollTextArea;
+    //Instanciamos un objeto tipo Date, para obtener la fecha de creacion de los mensajes
     Date d;
     int contador, columna, fila,cont;
-    static PanamaHitek_Arduino arduino, arduinoSend;
+    // Instanciamos el objeto arduino el cual nos ayudara con la comunicacion de java con arduino
+    static PanamaHitek_Arduino arduino;
     static SerialPortEventListener listener;
     static PanamaHitek_MultiMessage multi;
+    //OBjetos utilizados para lectura y escritura en archivo de texto
     static Scanner lector,lector1;
     static String entrada = "",entrada1="";
     FileWriter fichero = null;
@@ -72,6 +72,7 @@ public class InterfazUsu extends JFrame {
         this.setLayout(null);
         crear();
         try {
+            //Inicia comunicacion con arduino
             arduino.arduinoRXTX("/dev/ttyACM0", 9600, listener);
         } catch (ArduinoException ex) {
             Logger.getLogger(Control.class.getName()).log(Level.SEVERE, null, ex);
@@ -85,6 +86,7 @@ public class InterfazUsu extends JFrame {
     
     void carDat(){
         try {
+            //Se cargan los datos almacenados en el archivo de texto a la tabla de mensajes
             lector = new Scanner(new FileInputStream("/home/hernan_gonzalez/NetBeansProjects/SistemaMimetizador/SIstemaMimetizador/src/Texto/Cadena.txt"));
             while (lector.hasNext()) {
                 entrada = lector.nextLine();
@@ -93,9 +95,6 @@ public class InterfazUsu extends JFrame {
                 contador++;
                 Object[] datosEntrada = {contador, men[0], men[1]};
                 String sms = "";
-//                System.out.println(contador);
-//                            sms += "5" + "," + "Hola";
-//                            arduino.sendData(sms);
                 dtm.addRow(datosEntrada);
 
             }
@@ -105,6 +104,8 @@ public class InterfazUsu extends JFrame {
     }
 
     private void crear() {
+        //Metodo para crear interfaz de usuario
+        //Se inicializan los elementos necesarios para la construccion de interfaz
         btnAgregar = new JButton("Agregar");
         btnEliminar = new JButton("Eliminar");
         btnActualizar = new JButton("Actualizar");
@@ -124,6 +125,7 @@ public class InterfazUsu extends JFrame {
         scroll = new JScrollPane(tabla);
         d = new Date();
         etiqueta1 = new JLabel("panel uno", SwingConstants.CENTER);
+        //Obtenemos la fecha y hora actual del sistema.
         lblFecha = new JLabel("FECHA: " + d.getDate() + "/" + (d.getMonth() + 1)
                 + "/" + (d.getYear() + 1900), SwingConstants.CENTER);
         lblHora = new JLabel("HORA: " + d.getHours() + ":" + d.getMinutes()
@@ -135,22 +137,14 @@ public class InterfazUsu extends JFrame {
         lblTemp = new JLabel();
         lblHumedad = new JLabel();
         lblLum = new JLabel();
-        ////////////////////////
+        //SE inicializan los elementos necesarios para la comunicacion con arduino
         arduino = new PanamaHitek_Arduino();
-        arduinoSend = new PanamaHitek_Arduino();
         multi = new PanamaHitek_MultiMessage(3, arduino);
         listener = new SerialPortEventListener() {
             @Override
             public void serialEvent(SerialPortEvent spe) {
                 try {
                     if (multi.dataReceptionCompleted()) {
-//                        for (int i = 1; i <= dtm.getRowCount(); i++) {
-//                            arduino.sendData(i + "," + dtm.getValueAt(i - 1, 1) + " " + dtm.getValueAt(i - 1, 2));
-//                            
-//                        }
-                         // String tec;
-                         // tec=multi.getMessage(0);
-                        //arduino.sendData(dtm.getValueAt(Integer.parseInt(tec), 1).toString());
 //                        lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
 //                        lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
 //                        lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
@@ -167,6 +161,7 @@ public class InterfazUsu extends JFrame {
     }
 
     void armarPanelTAb() {
+        //Construccion de panel que muestra la fecha y hora
         panelPest.setBackground(Color.WHITE);
         panelTab1.setBackground(Color.WHITE);
         panelTab2.setBackground(Color.WHITE);
@@ -189,38 +184,16 @@ public class InterfazUsu extends JFrame {
         panelTab2.add(lblTemp);
         panelTab2.add(lblHumedad);
         panelTab2.add(lblLum);
-        btnSensores.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                multi = new PanamaHitek_MultiMessage(3, arduino);
-                listener = new SerialPortEventListener() {
-                    @Override
-                    public void serialEvent(SerialPortEvent spe) {
-                        try {
-                            if (multi.dataReceptionCompleted()) {
-                                lblTemp.setText("Temperatura: " + multi.getMessage(0) + "°C");
-                                lblHumedad.setText("Humedad: " + multi.getMessage(1) + "%");
-                                lblLum.setText("Luminosidad: " + multi.getMessage(2) + "");
-            
-                            }
-                        } catch (ArduinoException ex) {
-                            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (SerialPortException ex) {
-                            Logger.getLogger(InterfazUsu.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                };
-            }
-        });
-        panelTab2.add(btnSensores);
+        //panelTab2.add(btnSensores);
         panelPest.addTab("Fecha y Hora", null, panelTab1, "Primer panel");
-        panelPest.addTab("Medidas", null, panelTab2, "Segundo panel");
+        ///panelPest.addTab("Medidas", null, panelTab2, "Segundo panel");
         panelPest.addTab("Tabla de mensajes", null, panelTab3, "Tercer panel");
         System.out.println(arduino.getSerialPorts());
 
     }
 
     void armarPanelOeste() {
+        //Construccion del panel que muestra la tabla
         panel.setLayout(null);
         scrollTextArea.setBounds(50, 125, 300, 178);
         btnAgregar.setBounds(150, 330, 100, 30);
@@ -252,7 +225,6 @@ public class InterfazUsu extends JFrame {
                     } else {
                         JOptionPane.showMessageDialog(null, "Intenta mostrar un mensaje demasiado grande",
                                 "Error", JOptionPane.ERROR_MESSAGE, null);
-
                     }
                 } else {
                     JOptionPane.showMessageDialog(null, "El mensje que desea agregar esta vacio",
@@ -285,6 +257,7 @@ public class InterfazUsu extends JFrame {
         });
         btnAgregar.setBackground(new Color(50, 141, 182));
         btnActualizar.setBackground(new Color(50, 141, 182));
+        //Al actualizar la informacion de la tabla se envia nuevamente a arduino la informacion
         btnActualizar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
